@@ -1,0 +1,36 @@
+name: PITC Connectivity Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-pitc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test PITC
+        run: |
+          echo "Testing PITC..."
+
+          curl -L \
+            --max-time 60 \
+            --connect-timeout 20 \
+            -A "Mozilla/5.0" \
+            -X POST \
+            "https://bill.pitc.com.pk/mepcobill/general?refno=17151131771501" \
+            -o pitc.html \
+            -w "\nHTTP_STATUS=%{http_code}\nSIZE=%{size_download}\n"
+
+          echo "Checking response..."
+
+          wc -c pitc.html
+
+          echo "Searching for MEPCO..."
+
+          grep -i -m 5 "MEPCO" pitc.html || true
+
+      - name: Upload PITC response
+        uses: actions/upload-artifact@v4
+        with:
+          name: pitc-response
+          path: pitc.html
